@@ -144,7 +144,6 @@ ggsave(paste("images\\pheno_corr", trial_interest, ".png", sep = "_"),
 my_dat <- trial_rm_sd %>% 
   add_column(block = NA) %>% mutate(block = as.factor(block))
 
-# removing betacarotenoid_nirs, carotenoidtotal, DM_nirs, WAB_20min_10mon, WAB_30min_10mon
 
 my_dat <- my_dat <- my_dat %>% 
   mutate(
@@ -247,37 +246,37 @@ single_h2 %>%
   write.table("clipboard", sep = "\t", col.names = T, row.names = F, na = "")
 ```
 
+## Single CV
+
+```{r}
+single_CV <- obj$resum_fitted_model[ ,c(1:2, 4)] %>% 
+  group_by(trial) %>%
+  spread(trait, value = CV) 
+
+master_data[["single_CV"]] <- single_CV # 202157DVGXE_polo H2 = 0.99
+```
+
+## Single variance components
+
+```{r}
+single_var_comp <- obj$resum_fitted_model[ ,c(1:2, 5:6)]
+
+master_data[["single_var_comp"]] <- single_var_comp 
+```
 
 
 ## Multi environmetal analysis
 
 ```{r}
-if (length(unique(my_dat$trial_name)) <= 3) { 
-traits_to_remove <- single_h2 %>% 
-  pivot_longer(!trial, names_to = "traits", values_to = "heritability") %>% 
-  filter(heritability < 0.1 | is.na(heritability)) %>% distinct(traits) %>% pull(traits)
-
-# traits removed because of low heritability
-single_h2 %>% 
-  pivot_longer(!trial, names_to = "traits", values_to = "heritability") %>% 
-  filter(heritability < 0.1 | is.na(heritability)) %>% 
-  write.table("clipboard", sep = "\t", col.names = T, row.names = F)
-
-met_results <- met_analysis(obj, 
-                            filter_traits = trait_ideal[!trait_ideal %in% c(traits_to_remove)],
-                            h2_filter = 0.09,
-                            progress = TRUE)
-}
-
-
 # several trials
 met_results <- met_analysis(obj, 
-                            filter_traits = trait_ideal[!trait_ideal %in% c("CBB_3mon",
-                                                                            "frogskin1_5",
-                                                                            "HCN_linamarase_10mon",
-                                                                            "lodging1_3_4mon",
-                                                                            "lodging1_3_6mon",
-                                                                            "thrips1_5")],
+                            filter_traits = 
+                              trait_ideal[!trait_ideal %in% c("CBB_3mon",
+                                                              "frogskin1_5",
+                                                              "HCN_linamarase_10mon",
+                                                              "lodging1_3_4mon",
+                                                              "lodging1_3_6mon",
+                                                              "thrips1_5")],
                             h2_filter = 0.09,
                             progress = TRUE)
 
@@ -438,9 +437,9 @@ for (i in 1:length(variables)) {
 
 BLUEs_BLUPs <- BLUEs_BLUPs %>%
   select(genotype, all_of(header_sort), -starts_with("se")) 
-BLUEs_BLUPs <- BLUEs_BLUPs %>% 
-  relocate(colnames(BLUEs_BLUPs)[str_detect(colnames(BLUEs_BLUPs), "DM_gravity")], .after = genotype)
 
+BLUEs_BLUPs <- BLUEs_BLUPs %>% 
+  relocate(colnames(BLUEs_BLUPs)[str_detect(colnames(BLUEs_BLUPs), "DM_gravity|yield_ha|WAB_30min")], .after = genotype)
 
 master_data[["BLUEs_BLUPs_MET"]] = BLUEs_BLUPs
 ```
@@ -459,7 +458,7 @@ geno_cor <- gg_cor(
   axis.text.x = element_text(size = 14))
 
 
-ggsave(paste("images\\geno_corr", trial_interest, Sys.Date(), ".png", sep = "_"),
+ggsave(paste("images\\geno_corr", trial_interest, ".png", sep = "_"),
        units = "in", dpi = 300, width = 14, height = 8)
 ```
 
@@ -474,10 +473,10 @@ write.xlsx(master_data, file = meta_file_name)
 # It is neccessary change some elements names from master_file
 
 grep("^BLUP_BLUE_root_number_commercial", names(master_data))
-names(master_data)[28] <- "BLUP_BLUE_root_commercial"
+names(master_data)[30] <- "BLUP_BLUE_root_commercial"
 
 grep("^BLUP_BLUE_root_weight_commercial", names(master_data))
-names(master_data)[34] <- "BLUP_BLUE_root_wt_commercial"
+names(master_data)[36] <- "BLUP_BLUE_root_wt_commercial"
 
 write.xlsx(master_data, file = meta_file_name)
 ```
